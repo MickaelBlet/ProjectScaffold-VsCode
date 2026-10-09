@@ -1,6 +1,6 @@
 // Outline of project files: symbols for the Outline view and breadcrumbs of their text editors.
 import * as vscode from 'vscode'
-import { outline, type OutlineKind, type OutlineNode } from '../../src/renderer/src/model/outline'
+import { outline, type OutlineKind, type OutlineNode } from '../viewer/src/renderer/src/model/outline'
 
 const SYMBOL_KINDS: Record<OutlineKind, vscode.SymbolKind> = {
   project: vscode.SymbolKind.Package,

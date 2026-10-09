@@ -1,8 +1,8 @@
 // Problems of project files in the VS Code Problems panel: load errors, else validation problems,
 // on the line of the entity they concern. Kept up to date while the document is open.
 import * as vscode from 'vscode'
-import { locateProblems } from '../../src/renderer/src/model/locate'
-import { formatFromPath } from '../../src/renderer/src/model/serialize'
+import { locateProblems } from '../viewer/src/renderer/src/model/locate'
+import { formatFromPath } from '../viewer/src/renderer/src/model/serialize'
 
 /** Delay after the last change of a document before checking it again. */
 const CHECK_MS = 300

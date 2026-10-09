@@ -9,7 +9,7 @@
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/MickaelBlet/ProjectScaffold"
+    "url": "https://github.com/MickaelBlet/ProjectScaffold-VsCode"
   },
   "icon": "media/icon.png",
   "engines": {
@@ -30,8 +30,26 @@
     "out/**/*.js",
     "media/**",
     "resources/**",
-    "LICENSE"
+    "LICENSE",
+    "THIRD.md"
   ],
+  "scripts": {
+    "viewer": "scripts/build_viewer.sh",
+    "typecheck": "tsc -p .",
+    "compile": "tsc -p . && esbuild src/extension.ts --bundle --platform=node --format=cjs --target=node20 --external:vscode --outfile=out/extension.js",
+    "media": "mkdir -p media && cp viewer/dist-web/index.html viewer/electron/icon.png media/",
+    "build": "npm run viewer && npm run compile && npm run media",
+    "package": "npm run build && mkdir -p dist-vscode && vsce package $npm_package_version --no-git-tag-version --no-update-package-json --no-dependencies --out dist-vscode/",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "@types/vscode": "~1.95.0",
+    "@vscode/vsce": "^4.0.0",
+    "esbuild": "^0.28.2",
+    "prettier": "^3.9.9",
+    "typescript": "^6.0.3"
+  },
   "contributes": {
     "viewsContainers": {
       "activitybar": [
@@ -109,27 +127,6 @@
         "category": "ProjectScaffold"
       },
       {
-        "command": "projectScaffold.generate",
-        "title": "Generate Code",
-        "category": "ProjectScaffold",
-        "icon": "$(file-code)"
-      },
-      {
-        "command": "projectScaffold.generateInto",
-        "title": "Generate Code Into…",
-        "category": "ProjectScaffold"
-      },
-      {
-        "command": "projectScaffold.codeTemplates",
-        "title": "Code Templates…",
-        "category": "ProjectScaffold"
-      },
-      {
-        "command": "projectScaffold.generationPanel",
-        "title": "Show Code Generation Panel",
-        "category": "ProjectScaffold"
-      },
-      {
         "command": "projectScaffold.search",
         "title": "Show Search Panel",
         "category": "ProjectScaffold"
@@ -193,22 +190,6 @@
           "when": "projectScaffold.diagramActive"
         },
         {
-          "command": "projectScaffold.generate",
-          "when": "projectScaffold.diagramActive || resourceFilename =~ /\\.scaffold\\.(ya?ml|json)$/"
-        },
-        {
-          "command": "projectScaffold.generateInto",
-          "when": "projectScaffold.diagramActive || resourceFilename =~ /\\.scaffold\\.(ya?ml|json)$/"
-        },
-        {
-          "command": "projectScaffold.codeTemplates",
-          "when": "projectScaffold.diagramActive || resourceFilename =~ /\\.scaffold\\.(ya?ml|json)$/"
-        },
-        {
-          "command": "projectScaffold.generationPanel",
-          "when": "projectScaffold.diagramActive"
-        },
-        {
           "command": "projectScaffold.search",
           "when": "projectScaffold.diagramActive"
         },
@@ -228,11 +209,6 @@
       "editor/title": [
         {
           "command": "projectScaffold.showPreview",
-          "when": "resourceFilename =~ /\\.scaffold\\.(ya?ml|json)$/ && activeEditor == 'workbench.editors.files.textFileEditor'",
-          "group": "navigation"
-        },
-        {
-          "command": "projectScaffold.generate",
           "when": "resourceFilename =~ /\\.scaffold\\.(ya?ml|json)$/ && activeEditor == 'workbench.editors.files.textFileEditor'",
           "group": "navigation"
         },
@@ -260,32 +236,12 @@
           "command": "projectScaffold.exportSvg",
           "when": "projectScaffold.diagramActive",
           "group": "export"
-        },
-        {
-          "command": "projectScaffold.generate",
-          "when": "projectScaffold.diagramActive",
-          "group": "navigation@4"
-        },
-        {
-          "command": "projectScaffold.generateInto",
-          "when": "projectScaffold.diagramActive",
-          "group": "generate"
-        },
-        {
-          "command": "projectScaffold.codeTemplates",
-          "when": "projectScaffold.diagramActive",
-          "group": "generate"
         }
       ],
       "explorer/context": [
         {
           "command": "projectScaffold.showPreview",
           "when": "resourceExtname =~ /^\\.(ya?ml|json)$/",
-          "group": "navigation"
-        },
-        {
-          "command": "projectScaffold.generate",
-          "when": "resourceFilename =~ /\\.scaffold\\.(ya?ml|json)$/",
           "group": "navigation"
         }
       ]
@@ -481,8 +437,8 @@
             "full"
           ],
           "enumDescriptions": [
-            "Explorer and Code generation in the ProjectScaffold side bar, the Inspector and Settings in the preview",
-            "Every tool docked in the preview, like the web app; templates and generated files open in its tabs"
+            "Explorer in the ProjectScaffold side bar, the Inspector and Settings in the preview",
+            "Every tool docked in the preview, like the web app"
           ],
           "default": "integrated",
           "markdownDescription": "Layout of the diagram preview. _Switch to Full Layout_ / _Switch to Integrated Layout_ (editor title bar, toolbar of the diagram) change it for every preview."
@@ -503,17 +459,7 @@
         "projectScaffold.preview.showSideBar": {
           "type": "boolean",
           "default": true,
-          "description": "Opening a preview shows the ProjectScaffold side bar (Explorer, Code generation), in the integrated layout."
-        },
-        "projectScaffold.generate.outputDir": {
-          "type": "string",
-          "default": "generated/${project}",
-          "markdownDescription": "Directory of the code generated from a project file (_Generate Code_), relative to the file; `${project}` is the project's namespace. _Generate Code Into…_ picks another one, remembered for the file in the workspace."
-        },
-        "projectScaffold.generate.templates": {
-          "type": "string",
-          "default": "",
-          "markdownDescription": "Template folder of the code generated from a project file, relative to the file (a `manifest.yaml` and its templates); empty: the output directory's `.scaffold/templates`, else the project's built-in template set (`generation.templates`, default `cpp17`). _Code Templates…_ picks another one, remembered for the file in the workspace."
+          "description": "Opening a preview shows the ProjectScaffold side bar (Explorer), in the integrated layout."
         }
       }
     }

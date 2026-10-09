@@ -1,6 +1,6 @@
 # VS Code
 
-The extension opens `*.scaffold.yaml` / `.yml` / `.json` files as text, with an editable diagram preview beside them, like the Markdown preview. Its own README, with the commands and settings tables: [`vscode/README.md`](../vscode/README.md). Building and installing it: [Building › VS Code extension](building.md#vs-code-extension).
+The extension opens `*.scaffold.yaml` / `.yml` / `.json` files as text, with an editable diagram preview beside them, like the Markdown preview. Its README, with the commands and settings tables: [`README.md`](../README.md). Building and installing it: [Building](building.md).
 
 ![ProjectScaffold in VS Code: side bar, diagram preview and the drone example's text](vscode.png)
 
@@ -14,18 +14,18 @@ The extension opens `*.scaffold.yaml` / `.yml` / `.json` files as text, with an 
 
 ## Side bar and layouts
 
-- The app's Explorer and Code generation are tabs of the _ProjectScaffold_ side bar (activity bar), for the project file being edited; Settings is with the diagram's Inspector. Selecting there shows the entity in the diagram and the text.
+- The app's Explorer is the _ProjectScaffold_ side bar (activity bar), for the project file being edited; Settings is with the diagram's Inspector. Selecting there shows the entity in the diagram and the text.
 - The side bar opens when a project file is first opened (`projectScaffold.views.revealOnOpen`) and with a preview (`projectScaffold.preview.showSideBar`).
-- _Window › Full layout_, the editor title button or `projectScaffold.preview.layout` switch the preview to the _full_ layout, every tool docked in it like the web app (templates and generated files in its tabs), and back to the _integrated_ one.
+- _Window › Full layout_, the editor title button or `projectScaffold.preview.layout` switch the preview to the _full_ layout, every tool docked in it like the web app, and back to the _integrated_ one.
 
 ## Code generation
 
-_Generate Code_ runs from the text editor's title, the diagram's title, the ProjectScaffold Explorer view's title and the files' explorer menu; a preview opens for it when no diagram shows the file. Output directory and templates: [Code generation › In the editor](code-generation.md#in-the-editor).
+Code is generated from the project files by [ProjectScaffold-Generator](https://github.com/MickaelBlet/ProjectScaffold-Generator) (command line), not by the extension.
 
 ## Integration
 
 - Problems go to the VS Code Problems panel, on the line of their entity.
-- The Output log (code generation, messages) also goes to the _ProjectScaffold_ output channel.
+- The Output log (messages) also goes to the _ProjectScaffold_ output channel.
 - The outline goes to the Outline view and the breadcrumbs of the text.
 - Dependencies are refreshed from the files next to the document.
 - With the theme setting _VS Code_ (the default), the colors are those of the VS Code color theme.

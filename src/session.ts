@@ -1,53 +1,23 @@
 // A page of the app bound to a project document: the diagram preview beside its text (preview.ts), or
-// the side bar view, its tools in tabs (sidebar.ts), which follows the active project document. The TextDocument is the source of truth: the page sends the new text after each
-// change of the project, and changes of the text made elsewhere (text editor, undo, file on disk,
-// another page) are sent to the page. Selections go from page to page by data path of the file.
+// the side bar view (sidebar.ts), which follows the active project document. The TextDocument is the
+// source of truth: the page sends the new text after each change of the project, and changes of the
+// text made elsewhere (text editor, undo, file on disk, another page) are sent to the page. Selections
+// go from page to page by data path of the file.
 import { isAbsolute } from 'node:path'
 import * as vscode from 'vscode'
-import { lineOfPath } from '../../src/renderer/src/model/serialize'
+import { lineOfPath } from '../viewer/src/renderer/src/model/serialize'
 import { webviewHtml } from './html'
 import type {
   DiagramAction,
   PreviewLayout,
   LogLevel,
-  OutputDirReply,
-  OutputFileReply,
   SidePanel,
-  TextSpot,
   ToHost,
   ToPage,
   ViewRef,
   WebviewInit,
   WebviewMode
-} from './protocol'
-
-/** URI scheme of the built-in templates shown read-only (see BuiltinTemplates). */
-export const BUILTIN_SCHEME = 'projectscaffold-builtin'
-
-/** Built-in templates, given by the pages (the extension does not bundle them), read-only documents. */
-export class BuiltinTemplates implements vscode.TextDocumentContentProvider {
-  private readonly texts = new Map<string, string>()
-  private readonly changed = new vscode.EventEmitter<vscode.Uri>()
-  readonly onDidChange = this.changed.event
-
-  /** URI of a built-in template, `<set>/<file>`, keeping its text. */
-  set(path: string, text: string): vscode.Uri {
-    const uri = vscode.Uri.from({ scheme: BUILTIN_SCHEME, path: `/${path}` })
-    if (this.texts.get(uri.path) !== text) {
-      this.texts.set(uri.path, text)
-      this.changed.fire(uri)
-    }
-    return uri
-  }
-
-  provideTextDocumentContent(uri: vscode.Uri): string {
-    return this.texts.get(uri.path) ?? ''
-  }
-
-  dispose(): void {
-    this.changed.dispose()
-  }
-}
+} from '../viewer/src/renderer/src/vscodeProtocol'
 
 /** Diagram preview beside the text. */
 export const PREVIEW_TYPE = 'projectScaffold.preview'
@@ -255,11 +225,6 @@ export class DiagramSession {
       case 'log':
         this.sessions.log(msg.level, msg.text)
         return
-      case 'codegen':
-        this.sessions.codegen(this)
-        return
-      case 'openBuiltin':
-        return this.sessions.openBuiltin(msg.path, msg.text, msg.at)
       case 'ready':
         return this.sessions.ready(this)
     }
@@ -329,18 +294,6 @@ export class DiagramSession {
       case 'readSibling':
         await reply(msg.id, await this.sessions.read(this.uri, sibling(this.uri, msg.file)))
         return
-      case 'outputDir':
-        await reply(msg.id, await this.sessions.outputDir(this.uri, msg.pick, msg.name))
-        return
-      case 'templateDir':
-        await reply(msg.id, await this.sessions.templateDir(this.uri, msg.op))
-        return
-      case 'outputFile':
-        await reply(msg.id, await this.sessions.outputFile(msg.dir, msg.path, msg.op, msg.text))
-        return
-      case 'openOutputFile':
-        await this.sessions.openOutputFile(msg.dir, msg.path, msg.at)
-        return
       case 'openSibling':
         // As text: its preview is a click away.
         await vscode.commands.executeCommand('vscode.open', sibling(this.uri, msg.file))
@@ -364,7 +317,7 @@ export class DiagramSession {
   }
 }
 
-/** The ProjectScaffold side bar view: one page, the app's side tools in tabs (see package.json). */
+/** The ProjectScaffold side bar view: one page, the app's Explorer (see package.json). */
 export const SIDE_VIEW = 'projectScaffold.panel'
 
 function documentInit(document: vscode.TextDocument | undefined): Pick<WebviewInit, 'path' | 'uri' | 'text'> {
@@ -385,8 +338,6 @@ export class Sessions implements vscode.Disposable {
   readonly onDidOpen = this.opened.event
   /** Project document of the side panels: of the active diagram, else of the active text editor. */
   private current: vscode.Uri | undefined
-  /** Output directories given to the pages: the only ones they write into. */
-  private readonly outputs = new Set<string>()
   /** Folders out of the workspace the pages may read files of (by URI), as answered by the user. */
   private readonly readable = new Map<string, boolean>()
   /** View shown by the diagrams of each document (by name, null: global). */
@@ -397,9 +348,7 @@ export class Sessions implements vscode.Disposable {
   private readonly revealed = new Set<string>()
   /** Tab of the side bar view asked for before it was loaded (see showPanel). */
   private sideTab: SidePanel | undefined
-  /** Built-in templates shown read-only. */
-  private readonly builtins = new BuiltinTemplates()
-  /** Output log of the pages: code generation, messages. */
+  /** Output log of the pages: messages. */
   private readonly output = vscode.window.createOutputChannel('ProjectScaffold', { log: true })
   private readonly subscriptions = vscode.Disposable.from(
     vscode.workspace.onDidChangeTextDocument((e) => {
@@ -407,7 +356,6 @@ export class Sessions implements vscode.Disposable {
       for (const s of this.of(e.document)) s.changed(e.document.getText())
     }),
     vscode.window.onDidChangeActiveTextEditor(() => this.follow()),
-    vscode.workspace.registerTextDocumentContentProvider(BUILTIN_SCHEME, this.builtins),
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration('projectScaffold.preview.layout')) void this.relayout()
     })
@@ -562,12 +510,6 @@ export class Sessions implements vscode.Disposable {
     return tab
   }
 
-  /** Runs an app command in a diagram of a project document (`uri`, else the one being edited). */
-  async runFor(uri: vscode.Uri | undefined, command: string): Promise<void> {
-    const target = uri ?? this.active()?.uri ?? this.textProject() ?? this.current
-    if (target) await this.toDiagram(target, { type: 'run', command })
-  }
-
   /** Sends to a diagram of a document: the active one, else any, else a preview opened for it, once loaded. */
   private async toDiagram(target: vscode.Uri, message: ToPage): Promise<void> {
     const diagrams = [...this.all].filter((s) => s.mode !== 'panel' && s.shows(target))
@@ -609,11 +551,6 @@ export class Sessions implements vscode.Disposable {
       if (s !== from && s.shows(from.uri)) void s.post({ type: 'reveal', path, names: [] })
   }
 
-  /** A page generated code or chose other templates: the other pages of its document list the files again. */
-  codegen(from: DiagramSession): void {
-    for (const s of this.all) if (s !== from && s.shows(from.uri)) void s.post({ type: 'codegen' })
-  }
-
   /** A diagram shows another view: its side panels follow. */
   viewChanged(from: DiagramSession, view: ViewRef): void {
     if (!from.uri) return
@@ -624,60 +561,6 @@ export class Sessions implements vscode.Disposable {
   /** A side panel asks a diagram of its document for an action: the active one, else any, else a new preview. */
   inDiagram(from: DiagramSession, action: DiagramAction): void {
     if (from.uri) void this.toDiagram(from.uri, { type: 'action', action })
-  }
-
-  /** Output directory of the code generated from a document (see ToHost `outputDir`). */
-  async outputDir(document: vscode.Uri, pick: boolean, name: string): Promise<OutputDirReply | null> {
-    const key = `outputDir:${document.toString()}`
-    const saved = this.context.workspaceState.get<string>(key)
-    const setting = vscode.workspace
-      .getConfiguration('projectScaffold')
-      .get<string>('generate.outputDir', 'generated/${project}')
-    const configured = sibling(document, setting.replaceAll('${project}', name))
-    let dir = saved ? vscode.Uri.parse(saved) : configured
-    if (pick) {
-      const picked = await vscode.window.showOpenDialog({
-        canSelectFolders: true,
-        canSelectFiles: false,
-        canSelectMany: false,
-        defaultUri: dir,
-        openLabel: 'Generate Here',
-        title: 'Generate code into'
-      })
-      if (!picked?.[0]) return null
-      dir = picked[0]
-      await this.context.workspaceState.update(key, dir.toString())
-    }
-    this.outputs.add(dir.toString())
-    return { dir: dir.toString(), label: vscode.workspace.asRelativePath(dir) }
-  }
-
-  /** Template folder of the code generated from a document (see ToHost `templateDir`). */
-  async templateDir(document: vscode.Uri, op: 'current' | 'pick' | 'forget'): Promise<OutputDirReply | null> {
-    const key = `templateDir:${document.toString()}`
-    if (op === 'forget') {
-      await this.context.workspaceState.update(key, undefined)
-      return null
-    }
-    const saved = this.context.workspaceState.get<string>(key)
-    const setting = vscode.workspace.getConfiguration('projectScaffold').get<string>('generate.templates', '')
-    let dir = saved ? vscode.Uri.parse(saved) : setting ? sibling(document, setting) : null
-    if (op === 'pick') {
-      const picked = await vscode.window.showOpenDialog({
-        canSelectFolders: true,
-        canSelectFiles: false,
-        canSelectMany: false,
-        defaultUri: dir ?? vscode.Uri.joinPath(document, '..'),
-        openLabel: 'Use Templates',
-        title: 'Template folder of the code generation'
-      })
-      if (!picked?.[0]) return null
-      dir = picked[0]
-      await this.context.workspaceState.update(key, dir.toString())
-    }
-    if (!dir) return null
-    this.outputs.add(dir.toString())
-    return { dir: dir.toString(), label: vscode.workspace.asRelativePath(dir) }
   }
 
   /**
@@ -711,55 +594,6 @@ export class Sessions implements vscode.Disposable {
     }
   }
 
-  /** A file of an output directory given to a page; null when the path leaves it. */
-  private outputUri(dir: string, path: string): vscode.Uri | null {
-    const parts = path.split('/')
-    if (!this.outputs.has(dir) || parts.some((p) => !p || p === '.' || p === '..' || p.includes('\\')))
-      return null
-    return vscode.Uri.joinPath(vscode.Uri.parse(dir), ...parts)
-  }
-
-  /** Shows a built-in template in a read-only editor, selecting `at`. */
-  async openBuiltin(path: string, text: string, at?: TextSpot): Promise<void> {
-    const uri = this.builtins.set(path, text)
-    const selection = at && new vscode.Range(at.line - 1, at.column, at.line - 1, at.column + at.length)
-    await vscode.commands.executeCommand('vscode.open', uri, selection && { selection })
-  }
-
-  /** Opens a file of an output or template directory in its own editor, selecting `at`. */
-  async openOutputFile(dir: string, path: string, at?: TextSpot): Promise<void> {
-    const uri = this.outputUri(dir, path)
-    const selection = at && new vscode.Range(at.line - 1, at.column, at.line - 1, at.column + at.length)
-    if (uri) await vscode.commands.executeCommand('vscode.open', uri, selection && { selection })
-  }
-
-  /** Reads, writes or removes a file of an output directory given to a page. */
-  async outputFile(
-    dir: string,
-    path: string,
-    op: 'read' | 'write' | 'remove',
-    text = ''
-  ): Promise<OutputFileReply> {
-    const uri = this.outputUri(dir, path)
-    if (!uri) return { error: `'${path}' is not a file of the output directory` }
-    try {
-      switch (op) {
-        case 'read':
-          return { text: new TextDecoder().decode(await vscode.workspace.fs.readFile(uri)) }
-        case 'write':
-          await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(uri, '..'))
-          await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(text))
-          return { text: null }
-        case 'remove':
-          await vscode.workspace.fs.delete(uri, { useTrash: false })
-          return { text: null }
-      }
-    } catch (e) {
-      if (e instanceof vscode.FileSystemError && e.code === 'FileNotFound') return { text: null }
-      return { error: e instanceof Error ? e.message : String(e) }
-    }
-  }
-
   private storage(): Record<string, string> {
     return this.context.globalState.get<Record<string, string>>(STORAGE_KEY) ?? {}
   }
@@ -782,7 +616,6 @@ export class Sessions implements vscode.Disposable {
 
   dispose(): void {
     this.subscriptions.dispose()
-    this.builtins.dispose()
     this.opened.dispose()
     this.output.dispose()
   }

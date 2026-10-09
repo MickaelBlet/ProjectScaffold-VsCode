@@ -1,22 +1,15 @@
 // ProjectScaffold for VS Code. Project files (*.scaffold.{yaml,yml,json}) open as text with an
 // editable diagram preview beside them; the text cursor and the diagram selection follow each other.
-// The app's Explorer and Code generation are tabs of the ProjectScaffold side bar view, opened with the
-// first project file, unless the previews dock every tool in their page (full layout). Problems go to
-// the Problems panel, the outline of the text to the Outline view.
+// The app's Explorer is the ProjectScaffold side bar view, opened with the first project file, unless
+// the previews dock every tool in their page (full layout). Problems go to the Problems panel, the
+// outline of the text to the Outline view.
 import * as vscode from 'vscode'
-import { structureAt } from '../../src/renderer/src/components/completion'
+import { structureAt } from '../viewer/src/renderer/src/components/completion'
 import { symbolProvider } from './outline'
 import { Previews } from './preview'
 import { Problems } from './problems'
 import { SidePanelProvider } from './sidebar'
-import {
-  PREVIEW_TYPE,
-  PROJECT_FILE,
-  Sessions,
-  setPreviewLayout,
-  SIDE_VIEW,
-  syncSelection
-} from './session'
+import { PREVIEW_TYPE, PROJECT_FILE, Sessions, setPreviewLayout, SIDE_VIEW, syncSelection } from './session'
 
 /** VS Code commands running an app command in the active diagram. */
 const APP_COMMANDS: Record<string, string> = {
@@ -26,18 +19,9 @@ const APP_COMMANDS: Record<string, string> = {
   'projectScaffold.exportSvg': 'file.exportSvg',
   'projectScaffold.importSettings': 'file.importSettings',
   'projectScaffold.exportSettings': 'file.exportSettings',
-  'projectScaffold.generationPanel': 'window.generation',
   'projectScaffold.search': 'window.search',
   'projectScaffold.problems': 'window.problems',
   'projectScaffold.output': 'window.output'
-}
-
-/** VS Code commands running an app command for a project document (menus give its URI), in a diagram
- *  opened for it when none is (see Sessions.runFor). */
-const DOCUMENT_COMMANDS: Record<string, string> = {
-  'projectScaffold.generate': 'file.generate',
-  'projectScaffold.generateInto': 'file.generateInto',
-  'projectScaffold.codeTemplates': 'file.codeTemplates'
 }
 
 /** Delay after the last cursor move before the diagram shows what is under it. */
@@ -81,7 +65,7 @@ export function activate(context: vscode.ExtensionContext): void {
     // Other files opened in a diagram (Open in ProjectScaffold) are project files too.
     sessions.onDidOpen((d) => problems.check(d)),
     vscode.window.registerWebviewPanelSerializer(PREVIEW_TYPE, previews),
-    // The view of the ProjectScaffold container, its tools in tabs.
+    // The view of the ProjectScaffold container: the Explorer.
     vscode.window.registerWebviewViewProvider(SIDE_VIEW, new SidePanelProvider(sessions), {
       webviewOptions: { retainContextWhenHidden: true }
     }),
@@ -91,11 +75,6 @@ export function activate(context: vscode.ExtensionContext): void {
     ),
     ...Object.entries(APP_COMMANDS).map(([id, command]) =>
       vscode.commands.registerCommand(id, () => run(command))
-    ),
-    ...Object.entries(DOCUMENT_COMMANDS).map(([id, command]) =>
-      vscode.commands.registerCommand(id, (uri?: unknown) =>
-        sessions.runFor(uri instanceof vscode.Uri ? uri : undefined, command)
-      )
     ),
     // From the text editor title (uri given), the files' explorer (uri given, the file maybe not open:
     // its text opens first) or the palette (active text editor).

@@ -1,0 +1,4 @@
+[submodule "viewer"]
+	path = viewer
+	url = ../ProjectScaffold-Viewer.git
+	ignore = untracked

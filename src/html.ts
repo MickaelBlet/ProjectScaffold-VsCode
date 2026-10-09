@@ -2,7 +2,7 @@
 // Policy and the document inlined before the app scripts run.
 import { randomBytes } from 'node:crypto'
 import * as vscode from 'vscode'
-import type { WebviewInit } from './protocol'
+import type { WebviewInit } from '../viewer/src/renderer/src/vscodeProtocol'
 
 let template: string | undefined
 

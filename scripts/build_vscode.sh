@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# Build the VS Code extension into dist-vscode/project-scaffold-vscode-<version>.vsix (web build included).
+# Build the VS Code extension into dist-vscode/project-scaffold-vscode-<version>.vsix (viewer web build included).
 # Install it with: code --install-extension dist-vscode/project-scaffold-vscode-<version>.vsix
-# In Docker instead: docker buildx bake vscode
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -11,6 +10,6 @@ if [ ! -f node_modules/.package-lock.json ] || [ package-lock.json -nt node_modu
 fi
 
 rm -rf dist-vscode
-npm run vscode:build # web build + extension + vsce package
+npm run package # viewer web build + extension + vsce package
 
 ls -lh dist-vscode/*.vsix
