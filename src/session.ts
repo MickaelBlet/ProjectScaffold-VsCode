@@ -205,6 +205,8 @@ export class DiagramSession {
     this.uri = uri
     this.written = undefined
     const document = uri && (await vscode.workspace.openTextDocument(uri))
+    // Switched again meanwhile: the latest document only.
+    if (this.uri !== uri) return
     await this.post({ type: 'document', ...documentInit(document) })
     const view = uri && this.sessions.viewOf(uri)
     if (view !== undefined) await this.post({ type: 'view', view })
@@ -548,7 +550,7 @@ export class Sessions implements vscode.Disposable {
   /** A page selected an entity: the other pages of its document show it. */
   reveal(from: DiagramSession, path: DataPath): void {
     for (const s of this.all)
-      if (s !== from && s.shows(from.uri)) void s.post({ type: 'reveal', path, names: [] })
+      if (s !== from && s.shows(from.uri)) void s.post({ type: 'reveal', path, names: [], cursor: false })
   }
 
   /** A diagram shows another view: its side panels follow. */

@@ -29,7 +29,7 @@ const APP_COMMANDS: Record<string, string> = {
 /** Delay after the last cursor move before the diagram shows what is under it. */
 const FOLLOW_MS = 250
 
-/** The diagrams of a document show the entity under the text cursor. */
+/** The pages of a document (diagrams, side bar view) show the entity under the text cursor. */
 function followCursor(sessions: Sessions): vscode.Disposable {
   let timer: ReturnType<typeof setTimeout> | undefined
   const subscription = vscode.window.onDidChangeTextEditorSelection((e) => {
@@ -37,7 +37,7 @@ function followCursor(sessions: Sessions): vscode.Disposable {
     const byUser =
       e.kind === vscode.TextEditorSelectionChangeKind.Keyboard ||
       e.kind === vscode.TextEditorSelectionChangeKind.Mouse
-    if (!byUser || !syncSelection() || !sessions.has(e.textEditor.document)) return
+    if (!byUser || !syncSelection() || !sessions.of(e.textEditor.document).length) return
     clearTimeout(timer)
     timer = setTimeout(() => {
       const document = e.textEditor.document
@@ -45,7 +45,7 @@ function followCursor(sessions: Sessions): vscode.Disposable {
         document.getText(),
         document.offsetAt(e.textEditor.selection.active)
       )
-      for (const s of sessions.of(document)) void s.post({ type: 'reveal', path, names })
+      for (const s of sessions.of(document)) void s.post({ type: 'reveal', path, names, cursor: true })
     }, FOLLOW_MS)
   })
   return new vscode.Disposable(() => {

@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Outline (text editor, VS Code Outline view and breadcrumbs): modules show their type parameters, constructors and destructor, locks and state machine (states, then transitions `From → To` with trigger, guard and action), their implemented interfaces (`⊸ LevelSink`) and derived operations (`{==, <}`), as structs do; placed modules of dependencies their attributes and methods.
 
+### Fixed
+
+- Selecting a module or a link in the side bar's Explorer brings it into view in the preview, as in the app, even when the focused view does not draw it (only the text cursor leaves the view as it is).
+- The side bar's Explorer follows the text cursor without a preview open too.
+- Switching project file: the side bar shows the last one when switching quickly, and changes not written yet go to the previous file, no longer to the new one.
+
 ## [1.1.0] - 2026-10-12
 
 ### Added

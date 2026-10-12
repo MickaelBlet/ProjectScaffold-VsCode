@@ -8,7 +8,7 @@ The extension opens `*.scaffold.yaml` / `.yml` / `.json` files as text, with an 
 
 - _Open Preview_: editor title, Ctrl+K V, or the explorer menu for any other YAML/JSON project file. The preview opens on the left of the text by default (`projectScaffold.preview.position`).
 - The file stays a VS Code text document: dirty state, save, hot exit, git diff.
-- The text cursor and the diagram selection follow each other (`projectScaffold.syncSelection`).
+- The text cursor and the diagram selection follow each other (`projectScaffold.syncSelection`), the side bar's Explorer too, with or without a preview.
 - Undo in the preview undoes the diagram's changes; undo in the text, the text's.
 - While a diagram has the focus, its shortcuts win over VS Code's.
 
