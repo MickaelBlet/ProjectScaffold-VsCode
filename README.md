@@ -96,10 +96,10 @@ The preview opens on the left of the text by default (`projectScaffold.preview.p
 
 ### Layouts
 
-| Layout                   | Tools                                                                                              |
-| ------------------------ | -------------------------------------------------------------------------------------------------- |
-| Integrated (the default) | Explorer in the ProjectScaffold side bar, Inspector and Settings in the diagram                    |
-| Full                     | Explorer, Search, Inspector, Settings, Problems and Output docked in the diagram, like the web app |
+| Layout                   | Tools                                                                                                             |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| Integrated (the default) | Explorer in the ProjectScaffold side bar, Inspector and Settings in the diagram                                   |
+| Full                     | Explorer, Search, Inspector, Settings, Problems, Output and State machine docked in the diagram, like the web app |
 
 Switch with the **Full** / **Integrated** button of the diagram's toolbar, _Window › Full layout_, the editor
 title button (**Switch to Full Layout** / **Switch to Integrated Layout**) or the setting
@@ -133,16 +133,18 @@ See [Dependencies](https://github.com/MickaelBlet/ProjectScaffold-Viewer/blob/HE
 
 All under **ProjectScaffold:** in the command palette.
 
-| Command                                             | Description                        | Also in                          |
-| --------------------------------------------------- | ---------------------------------- | -------------------------------- |
-| Open Preview                                        | Diagram beside the text (Ctrl+K V) | text editor title, explorer menu |
-| Show Source                                         | Text of the diagram's file         | diagram title                    |
-| Switch to Full Layout / Switch to Integrated Layout | Layout of the previews             | diagram title                    |
-| Add Module                                          | New module in the diagram          |                                  |
-| Auto-arrange                                        | Lay out the diagram (ELK)          |                                  |
-| Export Diagram as PNG… / as SVG…                    | Image of the diagram               | diagram title (…)                |
-| Import Settings… / Export Settings…                 | App settings as a JSON file        |                                  |
-| Show Search / Problems / Output Panel               | Tool panel of the diagram          |                                  |
+| Command                                             | Description                          | Also in                          |
+| --------------------------------------------------- | ------------------------------------ | -------------------------------- |
+| Open Preview                                        | Diagram beside the text (Ctrl+K V)   | text editor title, explorer menu |
+| Show Source                                         | Text of the diagram's file           | diagram title                    |
+| Switch to Full Layout / Switch to Integrated Layout | Layout of the previews               | diagram title                    |
+| Add Module                                          | New module in the diagram            |                                  |
+| Auto-arrange                                        | Lay out the diagram (ELK)            |                                  |
+| Export Diagram as PNG… / as SVG…                    | Image of the diagram                 | diagram title (…)                |
+| Import Settings… / Export Settings…                 | App settings as a JSON file          |                                  |
+| Show Search / Problems / Output Panel               | Tool panel of the diagram            |                                  |
+| Show State Machine Panel                            | State machine of the selected module |                                  |
+| Tutorial                                            | Feature tour in the diagram          | diagram toolbar (book button)    |
 
 ## Settings
 

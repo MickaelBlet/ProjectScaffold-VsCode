@@ -21,7 +21,9 @@ const APP_COMMANDS: Record<string, string> = {
   'projectScaffold.exportSettings': 'file.exportSettings',
   'projectScaffold.search': 'window.search',
   'projectScaffold.problems': 'window.problems',
-  'projectScaffold.output': 'window.output'
+  'projectScaffold.output': 'window.output',
+  'projectScaffold.stateMachine': 'window.stateMachine',
+  'projectScaffold.tutorial': 'help.tutorial'
 }
 
 /** Delay after the last cursor move before the diagram shows what is under it. */
