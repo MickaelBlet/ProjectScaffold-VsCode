@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Since 1.1.0, the pages ignored every message of the extension: the diagram followed neither the text cursor, text edits nor the side bar's Explorer, the side bar not the active project file, and commands and dialogs (export, open) got no answer.
 - Selecting a module or a link in the side bar's Explorer brings it into view in the preview, as in the app, even when the focused view does not draw it (only the text cursor leaves the view as it is).
 - The side bar's Explorer follows the text cursor without a preview open too.
 - Switching project file: the side bar shows the last one when switching quickly, and changes not written yet go to the previous file, no longer to the new one.
